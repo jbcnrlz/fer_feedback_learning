@@ -1,6 +1,4 @@
-from mtcnn import MTCNN
-import cv2, shutil, os, torch, pandas as pd, time, copy
-#from mtcnn import MTCNN
+import torch, time, copy
 from torchvision import transforms, models
 from DatasetClasses.FEDatasets import CASME2
 from torch import nn, optim
@@ -29,7 +27,6 @@ def main():# Data augmentation and normalization for training
         'train': transforms.Compose([
             transforms.RandomResizedCrop(input_size),
             transforms.RandomHorizontalFlip(),
-            transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ]),
@@ -46,7 +43,6 @@ def main():# Data augmentation and normalization for training
         x: torch.utils.data.DataLoader(image_datasets[x], batch_size=100, shuffle=True, num_workers=4) for x in
         ['train', 'val']}
 
-    params_to_update = resnetFT.parameters()
     print("Params to learn:")
     params_to_update = []
     for name, param in resnetFT.named_parameters():

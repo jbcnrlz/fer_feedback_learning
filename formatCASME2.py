@@ -16,7 +16,7 @@ def main():
     for phase in ['train','val']:
         os.makedirs(os.path.join('CASME2_formated',phase,'neutral'))
         os.makedirs(os.path.join('CASME2_formated',phase,'onset'))
-        os.makedirs(os.path.join('CASME2_formated',phase,'set'))
+        os.makedirs(os.path.join('CASME2_formated',phase,'appex'))
         os.makedirs(os.path.join('CASME2_formated',phase,'offset'))
 
     valData = int(csvLoaded.shape[0] * 0.1)
@@ -28,8 +28,38 @@ def main():
             valData -= 1
             phase = 'val'
 
+        sizePhases = int((csvLoaded['OffsetFrame'][i] - csvLoaded['OnsetFrame'][i]) / 3.0)
+        imageNumberCopy = [
+            ('onset', csvLoaded['OnsetFrame'][i]),
+            ('appex' ,csvLoaded['OnsetFrame'][i] + sizePhases),
+            ('offset', csvLoaded['OffsetFrame'][i] - sizePhases),
+            ('stop' , csvLoaded['OffsetFrame'][i])
+        ]
         folderPath = os.path.join('CASME2-RAW','CASME2-RAW','sub%02d' % (csvLoaded['Subject'][i]),csvLoaded['Filename'][i])
 
+        for idx, it in enumerate(imageNumberCopy[:-1]):
+            for fNum in range(it[1],imageNumberCopy[idx+1][1]):
+                shutil.copyfile(
+                    os.path.join(folderPath, 'img%d.jpg' % (fNum)),
+                    os.path.join('CASME2_formated',phase, it[0],'%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i],fNum))
+                )
+
+        for j in range(1,csvLoaded['OnsetFrame'][i]):
+            shutil.copyfile(
+                os.path.join(folderPath,'img%d.jpg' % j),
+                os.path.join('CASME2_formated',phase, 'neutral', '%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i], j))
+            )
+
+        j = csvLoaded['OffsetFrame'][i]
+        while True:
+            if not os.path.exists(os.path.join(folderPath,'img%d.jpg' % j)):
+                break
+            shutil.copyfile(
+                os.path.join(folderPath,'img%d.jpg' % j),
+                os.path.join('CASME2_formated',phase, 'neutral', '%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i], j))
+            )
+            j += 1
+        '''
         #shutil.copyfile(os.path.join(folderPath, 'img%d.jpg' % (csvLoaded['OnsetFrame'][i])),
         #                os.path.join('CASME2_formated',phase, 'onset','%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i],csvLoaded['OnsetFrame'][i])))
 
@@ -70,6 +100,6 @@ def main():
             fImage = detectAndCropFace(face_cascade,imageOp)
             cv2.imwrite(os.path.join('CASME2_formated',phase, 'neutral', '%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i],j)), fImage)
             j += 1
-
+        '''
 if __name__ == '__main__':
     main()

@@ -1,14 +1,14 @@
-import torch.utils.data as data, os, cv2
+import torch.utils.data as data, os, re, torch
 from function import getDirectoriesInPath, getFilesInPath
 from PIL import Image as im
 
 class CASME2(data.Dataset):
     def __init__(self, casmepath, phase, transform=None):
         self.transform = transform
-        labelName = ['neutral','offset','onset','set']
         self.label = []
         self.filesPath = []
         raw_data_loaded = getDirectoriesInPath(os.path.join(casmepath,phase))
+        labelName = raw_data_loaded
         for r in raw_data_loaded:
             files = getFilesInPath(os.path.join(casmepath,phase,r))
             for f in files:
@@ -26,3 +26,119 @@ class CASME2(data.Dataset):
             image = self.transform(image)
 
         return image, label
+
+class CASME2Block(data.Dataset):
+    def __init__(self, casmepath, phase, blocksize, transform):
+        self.blocksize = blocksize
+        self.transform = transform
+        self.label = []
+        self.filesPath = []
+        raw_data_loaded = getDirectoriesInPath(os.path.join(casmepath,phase))
+        labelName = raw_data_loaded
+        for r in raw_data_loaded:
+            files = getFilesInPath(os.path.join(casmepath,phase,r))
+            blockFiles = {}
+            for f in files:
+                fileName = '_'.join(f.split(os.path.sep)[-1].split('_')[:-1])
+                if not fileName in blockFiles.keys():
+                    blockFiles[fileName] = []
+
+                blockFiles[fileName].append(f)
+
+            #qntdeBlock = int(sum([len(blockFiles[k]) for k in blockFiles]) / len(blockFiles.keys()) / self.blocksize)
+            for k in blockFiles:
+                blockFiles[k].sort(key=lambda f: int(re.sub('\D', '', f)))
+                for nBl in range(len(blockFiles[k]) - self.blocksize):
+                    if (nBl+self.blocksize) > len(blockFiles[k]):
+                        break
+                    blockData = blockFiles[k][nBl:nBl+self.blocksize]
+                    self.filesPath.append(blockData)
+                    self.label.append(labelName.index(r))
+
+    def __len__(self):
+        return len(self.filesPath)
+
+    def __getitem__(self, idx):
+        blockOutput = None
+        block = self.filesPath[idx]
+        for path in block:
+            image = im.open(path)
+            label = self.label[idx]
+            image = self.transform(image)
+            if blockOutput is None:
+                blockOutput = image
+            else:
+                blockOutput = torch.cat((blockOutput,image),0)
+
+
+        return blockOutput, label
+
+class IngDiscLearnDataSet(data.Dataset):
+    def __init__(self, idl_path, transform=None):
+        self.phase = 'test'
+        self.transform = transform
+        self.idl_path = idl_path
+
+        self.file_paths = getFilesInPath(self.idl_path)
+
+    def __len__(self):
+        return len(self.file_paths)
+
+    def __getitem__(self, idx):
+        path = self.file_paths[idx]
+        image = im.open(path)
+        label = path
+
+        if self.transform is not None:
+            image = self.transform(image)
+
+        return image, label
+
+
+class IngDiscLearnDataSetBlock(data.Dataset):
+    def __init__(self, idl_path,blocksize, transform=None):
+        self.phase = 'test'
+        self.blocksize = blocksize
+        self.filesPath = []
+        self.transform = transform
+        self.idl_path = idl_path
+
+        raw_data_loaded = getFilesInPath(self.idl_path)
+        blockFiles = {}
+        for f in raw_data_loaded:
+            fileName = '_'.join(f.split(os.path.sep)[-1].split('_')[:-1])
+            if not fileName in blockFiles.keys():
+                blockFiles[fileName] = []
+
+            blockFiles[fileName].append(f)
+
+        for k in blockFiles:
+            blockFiles[k].sort(key=lambda f: int(re.sub('\D', '', f)))
+            if len(blockFiles[k]) < blocksize:
+                continue
+
+            for nBl in range(len(blockFiles[k]) - 5):
+                if (nBl+self.blocksize) > len(blockFiles[k]):
+                    break
+                blockData = blockFiles[k][nBl:nBl+self.blocksize]
+                self.filesPath.append(blockData)
+
+    def __len__(self):
+        return len(self.filesPath)
+
+    def __getitem__(self, idx):
+
+        blockOutput = None
+        label = []
+        block = self.filesPath[idx]
+        for path in block:
+            image = im.open(path)
+            label.append(path)
+            image = self.transform(image)
+            if blockOutput is None:
+                blockOutput = image
+            else:
+                blockOutput = torch.cat((blockOutput,image),0)
+
+
+        return blockOutput, label
