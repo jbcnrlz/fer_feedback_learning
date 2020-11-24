@@ -1,6 +1,6 @@
 from finetune_resnet import set_parameter_requires_grad
 from torchvision import transforms, models
-from DatasetClasses.FEDatasets import CASME2Block
+from DatasetClasses.FEDatasets import CASME2Block, CASME2BlockTemporal
 from torch import nn, optim
 import torch, copy, time
 from NeuralNetworks.PyTorch.networks import TimeSeriesLearning
@@ -111,7 +111,7 @@ def main():# Data augmentation and normalization for training
 
     print("Initializing Datasets and Dataloaders...")
     #resnetFT, input_size = temporalRESNET()
-    resnetFT = TimeSeriesLearning(4,64,224*224*15)
+    resnetFT = TimeSeriesLearning(4,15)
     input_size = (224,224)
     data_transforms = {
         'train': transforms.Compose([
@@ -129,7 +129,7 @@ def main():# Data augmentation and normalization for training
 
     image_datasets = {x: CASME2Block('CASME2_formated', x, 5, data_transforms[x]) for x in ['train', 'val']}
     dataloaders_dict = {
-        x: torch.utils.data.DataLoader(image_datasets[x], batch_size=25, shuffle=True, num_workers=4) for x in
+        x: torch.utils.data.DataLoader(image_datasets[x], batch_size=25, shuffle=False, num_workers=4) for x in
         ['train', 'val']}
     print("Params to learn:")
     params_to_update = []
@@ -139,7 +139,7 @@ def main():# Data augmentation and normalization for training
             print("\t", name)
 
     optimizer_ft = optim.SGD(params_to_update, lr=0.001, momentum=0.9)
-    criterion = nn.NLLLoss()
+    criterion = nn.CrossEntropyLoss()
 
     a,b = trainNetwork(resnetFT,dataloaders_dict,criterion,optimizer_ft)
 

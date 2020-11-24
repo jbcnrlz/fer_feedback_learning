@@ -1,11 +1,20 @@
 import pandas as pd, os, shutil, random, cv2
 #from mtcnn import MTCNN
+from extractFacesFromVideo import *
 
 def detectAndCropFace(cascade,faceImage):
     grayIm = cv2.cvtColor(faceImage,cv2.COLOR_BGR2GRAY)
     faces = cascade.detectMultiScale(grayIm, 1.1, 4)
     for (x, y, w, h)  in faces:
         return faceImage[y:y+h, x:x+w]
+
+def cutFace(image,face_cascade,pathSave):
+    imOpened = cv2.imread(image)
+    facePos = detectFace(face_cascade, imOpened)
+    for (x, y, w, h) in facePos:
+        fImage = imOpened[y:y + h, x:x + w]
+        resized = cv2.resize(fImage,(224,224),interpolation=cv2.INTER_CUBIC)
+        cv2.imwrite(pathSave, resized)
 
 def main():
     face_cascade = cv2.CascadeClassifier('cascadeFolder/haarcascade_frontalface_default.xml')
@@ -39,67 +48,32 @@ def main():
 
         for idx, it in enumerate(imageNumberCopy[:-1]):
             for fNum in range(it[1],imageNumberCopy[idx+1][1]):
-                shutil.copyfile(
-                    os.path.join(folderPath, 'img%d.jpg' % (fNum)),
-                    os.path.join('CASME2_formated',phase, it[0],'%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i],fNum))
-                )
+                cutFace(os.path.join(folderPath, 'img%d.jpg' % (fNum)),face_cascade,os.path.join('CASME2_formated', phase, it[0],
+                                 '%02d_%s_%d.jpg' % (csvLoaded['Subject'][i], csvLoaded['Filename'][i], fNum)))
+                #shutil.copyfile(
+                #    os.path.join(folderPath, 'img%d.jpg' % (fNum)),
+                #    os.path.join('CASME2_formated',phase, it[0],'%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i],fNum))
+                #)
 
         for j in range(1,csvLoaded['OnsetFrame'][i]):
-            shutil.copyfile(
-                os.path.join(folderPath,'img%d.jpg' % j),
-                os.path.join('CASME2_formated',phase, 'neutral', '%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i], j))
-            )
+            cutFace(os.path.join(folderPath,'img%d.jpg' % j), face_cascade,
+                    os.path.join('CASME2_formated',phase, 'neutral', '%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i], j)))
+            #shutil.copyfile(
+            #    os.path.join(folderPath,'img%d.jpg' % j),
+            #    os.path.join('CASME2_formated',phase, 'neutral', '%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i], j))
+            #)
 
         j = csvLoaded['OffsetFrame'][i]
         while True:
             if not os.path.exists(os.path.join(folderPath,'img%d.jpg' % j)):
                 break
-            shutil.copyfile(
-                os.path.join(folderPath,'img%d.jpg' % j),
-                os.path.join('CASME2_formated',phase, 'neutral', '%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i], j))
-            )
-            j += 1
-        '''
-        #shutil.copyfile(os.path.join(folderPath, 'img%d.jpg' % (csvLoaded['OnsetFrame'][i])),
-        #                os.path.join('CASME2_formated',phase, 'onset','%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i],csvLoaded['OnsetFrame'][i])))
-
-        imageOp = cv2.imread(os.path.join(folderPath, 'img%d.jpg' % (csvLoaded['OnsetFrame'][i])))
-        fImage = detectAndCropFace(face_cascade,imageOp)
-        cv2.imwrite(os.path.join('CASME2_formated',phase, 'onset','%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i],csvLoaded['OnsetFrame'][i])), fImage)
-
-        #shutil.copyfile(os.path.join(folderPath, 'img%d.jpg' % (csvLoaded['OffsetFrame'][i])),
-        #                os.path.join('CASME2_formated',phase, 'offset', '%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i], csvLoaded['OffsetFrame'][i])))
-
-        imageOp = cv2.imread(os.path.join(folderPath, 'img%d.jpg' % (csvLoaded['OffsetFrame'][i])))
-        fImage = detectAndCropFace(face_cascade,imageOp)
-        cv2.imwrite(os.path.join('CASME2_formated',phase, 'offset','%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i],csvLoaded['OnsetFrame'][i])), fImage)
-
-        for j in range(csvLoaded['OnsetFrame'][i]+1,csvLoaded['OffsetFrame'][i]):
-            #shutil.copyfile(os.path.join(folderPath,'img%d.jpg' % j),
-            #                os.path.join('CASME2_formated',phase, 'set', '%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i],j)))
-            imageOp = cv2.imread(os.path.join(folderPath, 'img%d.jpg' % (j)))
-            fImage = detectAndCropFace(face_cascade,imageOp)
-            cv2.imwrite(os.path.join('CASME2_formated',phase, 'set', '%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i],j)), fImage)
-
-        for j in range(1,csvLoaded['OnsetFrame'][i]):
-            #shutil.copyfile(os.path.join(folderPath,'img%d.jpg' % j),
-            #                os.path.join('CASME2_formated',phase, 'neutral', '%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i], j)))
-            imageOp = cv2.imread(os.path.join(folderPath, 'img%d.jpg' % (j)))
-            fImage = detectAndCropFace(face_cascade,imageOp)
-            cv2.imwrite(os.path.join('CASME2_formated',phase, 'neutral', '%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i],j)), fImage)
-
-        j = csvLoaded['OffsetFrame'][i]+1
-        while True:
-            if not os.path.exists(os.path.join(folderPath,'img%d.jpg' % j)):
-                break
+            cutFace(os.path.join(folderPath,'img%d.jpg' % j), face_cascade,
+                    os.path.join('CASME2_formated',phase, 'neutral', '%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i], j)))
             #shutil.copyfile(
             #    os.path.join(folderPath,'img%d.jpg' % j),
             #    os.path.join('CASME2_formated',phase, 'neutral', '%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i], j))
             #)
-            imageOp = cv2.imread(os.path.join(folderPath, 'img%d.jpg' % (j)))
-            fImage = detectAndCropFace(face_cascade,imageOp)
-            cv2.imwrite(os.path.join('CASME2_formated',phase, 'neutral', '%02d_%s_%d.jpg' % (csvLoaded['Subject'][i],csvLoaded['Filename'][i],j)), fImage)
             j += 1
-        '''
+
 if __name__ == '__main__':
     main()

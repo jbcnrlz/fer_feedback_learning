@@ -14,7 +14,7 @@ def createFoldersForEmotions(emotions,pathBase='expressionsEmotions'):
 def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     wtgs = torch.load('temporal_resnet_50_best_loss.pth.tar')
-    rnet = TimeSeriesLearning(4,64,224*224*15)
+    rnet = TimeSeriesLearning(4,15)
     rnet = rnet.to(device)
     valT = transforms.Compose([
         transforms.Resize((224,224)),

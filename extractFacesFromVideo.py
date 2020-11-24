@@ -34,13 +34,7 @@ def main():
         faces = detectFace(face_cascade,imgv)
         newROIs = isNewROI(rois,faces)
         for (x,y,w,h) in newROIs:
-            diffSizeW = int((224 - w) / 2)
-            roix = x - diffSizeW if diffSizeW < x else 0
-            roiw = 224
-            diffSizeH = int((224 - h) / 2)
-            roiy = y - diffSizeH if diffSizeH < y else 0
-            roih = 224
-            rois.append((roix,roiy,roiw,roih))
+            rois.append((x,y,w,h))
         for fnum, b in enumerate(rois):
             print("Extraindo face %d" % (fnum))
             fImage = imgv[b[1]:b[1]+b[3],b[0]:b[0]+b[2]]

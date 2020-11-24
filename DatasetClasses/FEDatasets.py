@@ -1,6 +1,35 @@
 import torch.utils.data as data, os, re, torch
 from function import getDirectoriesInPath, getFilesInPath
 from PIL import Image as im
+#from generateDenseOpticalFlow import runDenseOpFlow
+
+def getCASME2BlockData(casmepath,phase,blocksize):
+    labels = []
+    filesPath = []
+    raw_data_loaded = getDirectoriesInPath(os.path.join(casmepath, phase))
+    labelName = raw_data_loaded
+    for r in raw_data_loaded:
+        files = getFilesInPath(os.path.join(casmepath, phase, r))
+        blockFiles = {}
+        for f in files:
+            fileName = '_'.join(f.split(os.path.sep)[-1].split('_')[:-1])
+            if not fileName in blockFiles.keys():
+                blockFiles[fileName] = []
+
+            blockFiles[fileName].append(f)
+
+        # qntdeBlock = int(sum([len(blockFiles[k]) for k in blockFiles]) / len(blockFiles.keys()) / self.blocksize)
+        for k in blockFiles:
+            blockFiles[k].sort(key=lambda f: int(re.sub('\D', '', f)))
+            for nBl in range(len(blockFiles[k]) - blocksize):
+                if (nBl + blocksize) > len(blockFiles[k]):
+                    break
+                blockData = blockFiles[k][nBl:nBl + blocksize]
+                filesPath.append(blockData)
+                labels.append(labelName.index(r))
+
+    return labels, filesPath
+
 
 class CASME2(data.Dataset):
     def __init__(self, casmepath, phase, transform=None):
@@ -72,6 +101,53 @@ class CASME2Block(data.Dataset):
 
 
         return blockOutput, label
+
+class CASME2BlockTemporal(data.Dataset):
+    def __init__(self, casmepath, phase, blocksize, transform):
+        self.blocksize = blocksize
+        self.transform = transform
+        self.label = []
+        self.filesPath = []
+        raw_data_loaded = getDirectoriesInPath(os.path.join(casmepath,phase))
+        labelName = raw_data_loaded
+        for r in raw_data_loaded:
+            files = getFilesInPath(os.path.join(casmepath,phase,r))
+            blockFiles = {}
+            for f in files:
+                fileName = '_'.join(f.split(os.path.sep)[-1].split('_')[:-1])
+                if not fileName in blockFiles.keys():
+                    blockFiles[fileName] = []
+
+                blockFiles[fileName].append(f)
+
+            #qntdeBlock = int(sum([len(blockFiles[k]) for k in blockFiles]) / len(blockFiles.keys()) / self.blocksize)
+            for k in blockFiles:
+                blockFiles[k].sort(key=lambda f: int(re.sub('\D', '', f)))
+                for nBl in range(len(blockFiles[k]) - self.blocksize):
+                    if (nBl+self.blocksize) > len(blockFiles[k]):
+                        break
+                    blockData = blockFiles[k][nBl:nBl+self.blocksize]
+                    self.filesPath.append(blockData)
+                    self.label.append(labelName.index(r))
+
+    def __len__(self):
+        return len(self.filesPath)
+
+    def __getitem__(self, idx):
+        blockOutput = None
+        block = self.filesPath[idx]
+        for path in block:
+            image = im.open(path)
+            label = self.label[idx]
+            image = self.transform(image)
+            if blockOutput is None:
+                blockOutput = image
+            else:
+                blockOutput = torch.cat((blockOutput,image),0)
+
+
+        return blockOutput, label
+
 
 class IngDiscLearnDataSet(data.Dataset):
     def __init__(self, idl_path, transform=None):
