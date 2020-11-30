@@ -1,20 +1,11 @@
 import argparse, os, face_alignment
-from function import getFilesInPath, getDirectoriesInPath
+from function import getFilePaths
 from skimage import io
 
 def saveLandmarks(ldns,filepath):
     with open(filepath,'w') as fp:
         for l in ldns:
             fp.write(','.join(list(map(str,l)))+'\n')
-
-
-def getFilePaths(pathBaseForFaces):
-    filesFound = []
-    dirs = getDirectoriesInPath(pathBaseForFaces)
-    for d in dirs:
-        filesFound += getFilePaths(os.path.join(pathBaseForFaces,d))
-
-    return filesFound + getFilesInPath(pathBaseForFaces,imagesOnly=True)
 
 def main(args):
     files = getFilePaths(args.pathBase)

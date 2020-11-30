@@ -1,9 +1,12 @@
 from finetune_resnet import set_parameter_requires_grad
 from torchvision import transforms, models
-from DatasetClasses.FEDatasets import CASME2Block, CASME2BlockTemporal
+from DatasetClasses.FEDatasets import CASME2Block, CASME2BlockTemporal, CASME2SALIENCY
 from torch import nn, optim
 import torch, copy, time
 from NeuralNetworks.PyTorch.networks import TimeSeriesLearning
+from torch.utils.tensorboard import SummaryWriter
+from function import plot_classes_preds
+import time
 
 def temporalRESNET(inputChannels=15):
     model_ft = models.resnet50(pretrained=True)
@@ -29,6 +32,8 @@ def trainNetwork(model, dataloaders, criterion, optimizer, num_epochs=25):
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
     best_loss = 1000
+    now = time.time()
+    wtr = SummaryWriter('runs/train_fe_detection/'+str(now))
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
@@ -55,7 +60,7 @@ def trainNetwork(model, dataloaders, criterion, optimizer, num_epochs=25):
                 # track history if only in train
                 with torch.set_grad_enabled(phase == 'train'):
                     model.zero_grad()
-                    outputs = model(inputs)
+                    outputs, feats = model(inputs)
                     loss = criterion(outputs, labels)
 
                     _, preds = torch.max(outputs, 1)
@@ -65,6 +70,8 @@ def trainNetwork(model, dataloaders, criterion, optimizer, num_epochs=25):
                         loss.backward()
                         optimizer.step()
 
+                #wtr.add_figure('Preds vs GT',plot_classes_preds(model,inputs,labels,('appex','neutral','offset','onset')))
+
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
@@ -73,6 +80,9 @@ def trainNetwork(model, dataloaders, criterion, optimizer, num_epochs=25):
             epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
+
+            wtr.add_scalar(phase + ' loss',epoch_loss,epoch)
+            wtr.add_scalar(phase + ' acc', epoch_acc, epoch)
 
             # deep copy the model
             if phase == 'val' and epoch_acc > best_acc:
@@ -111,25 +121,25 @@ def main():# Data augmentation and normalization for training
 
     print("Initializing Datasets and Dataloaders...")
     #resnetFT, input_size = temporalRESNET()
-    resnetFT = TimeSeriesLearning(4,15)
+    resnetFT = TimeSeriesLearning(4,3)
     input_size = (224,224)
     data_transforms = {
         'train': transforms.Compose([
             transforms.RandomResizedCrop(input_size),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
         ]),
         'val': transforms.Compose([
             transforms.Resize(input_size),
             transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
         ]),
     }
 
-    image_datasets = {x: CASME2Block('CASME2_formated', x, 5, data_transforms[x]) for x in ['train', 'val']}
+    image_datasets = {x: CASME2SALIENCY('CASME2_formated', x, data_transforms[x]) for x in ['train', 'val']}
     dataloaders_dict = {
-        x: torch.utils.data.DataLoader(image_datasets[x], batch_size=25, shuffle=False, num_workers=4) for x in
+        x: torch.utils.data.DataLoader(image_datasets[x], batch_size=25, shuffle=True, num_workers=4) for x in
         ['train', 'val']}
     print("Params to learn:")
     params_to_update = []
@@ -138,7 +148,7 @@ def main():# Data augmentation and normalization for training
             params_to_update.append(param)
             print("\t", name)
 
-    optimizer_ft = optim.SGD(params_to_update, lr=0.001, momentum=0.9)
+    optimizer_ft = optim.SGD(params_to_update, lr=0.005, momentum=0.9)
     criterion = nn.CrossEntropyLoss()
 
     a,b = trainNetwork(resnetFT,dataloaders_dict,criterion,optimizer_ft)

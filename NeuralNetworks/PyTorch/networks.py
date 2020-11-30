@@ -7,9 +7,11 @@ class TimeSeriesLearning(nn.Module):
 
         self.features = nn.Sequential(
             nn.Conv2d(in_channels, 32, kernel_size=3, stride=1),
+            nn.BatchNorm2d(32),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2),
             nn.Conv2d(32, 64, kernel_size=3, stride=1),
+            nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2),
         )
@@ -28,5 +30,5 @@ class TimeSeriesLearning(nn.Module):
         lstmout, _ = self.lstm(outfeatures.view(len(outfeatures),1,-1))
         tag_space = self.featureTimeLearning(lstmout.view(len(lstmout), -1))
         tag_scores = F.log_softmax(tag_space, dim=1)
-        return tag_scores
+        return tag_scores, tag_space
 

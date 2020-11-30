@@ -30,6 +30,30 @@ def getCASME2BlockData(casmepath,phase,blocksize):
 
     return labels, filesPath
 
+class CASME2SALIENCY(data.Dataset):
+    def __init__(self, casmepath, phase, transform=None):
+        self.transform = transform
+        self.label = []
+        self.filesPath = []
+        raw_data_loaded = ['appex','neutral','offset','onset']
+        labelName = raw_data_loaded
+        for r in raw_data_loaded:
+            files = getFilesInPath(os.path.join(casmepath,phase,r),onlyFiles=True,imagesOnly=True,imageExtesions=('png'))
+            for f in files:
+                self.filesPath.append(f)
+                self.label.append(labelName.index(r))
+
+    def __len__(self):
+        return len(self.filesPath)
+
+    def __getitem__(self, idx):
+        path = self.filesPath[idx]
+        image = im.open(path)
+        label = self.label[idx]
+        if self.transform is not None:
+            image = self.transform(image)
+
+        return image, label
 
 class CASME2(data.Dataset):
     def __init__(self, casmepath, phase, transform=None):
