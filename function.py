@@ -1,4 +1,13 @@
-import os, torch, numpy as np, torch.nn.functional as F, matplotlib.pyplot as plt
+import os, torch, numpy as np, torch.nn.functional as F, matplotlib.pyplot as plt, cv2
+
+def outputImageWithLandmarks(image,landmarks,pathImage):
+    for landmark in landmarks:
+        for x, y in landmark:
+            # display landmarks on "image_cropped"
+            # with white colour in BGR and thickness 1
+            cv2.circle(image, (x, y), 1, (0, 0, 255), 1)
+
+    cv2.imwrite(pathImage,image)
 
 def getDirectoriesInPath(path):
     return [f for f in os.listdir(path) if not os.path.isfile(os.path.join(path, f))]
@@ -15,13 +24,13 @@ def getFilesInPath(path, onlyFiles=True, fullPath=True,imagesOnly=False,imageExt
     else:
         return [joinFunc(path, f) for f in os.listdir(path) if (not imagesOnly or f.lower().endswith(imageExtesions))]
 
-def getFilePaths(pathBaseForFaces):
+def getFilePaths(pathBaseForFaces,imageExtesions=('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')):
     filesFound = []
     dirs = getDirectoriesInPath(pathBaseForFaces)
     for d in dirs:
-        filesFound += getFilePaths(os.path.join(pathBaseForFaces, d))
+        filesFound += getFilePaths(os.path.join(pathBaseForFaces, d),imageExtesions)
 
-    return filesFound + getFilesInPath(pathBaseForFaces, imagesOnly=True)
+    return filesFound + getFilesInPath(pathBaseForFaces, imagesOnly=True,imageExtesions=imageExtesions)
 
 def images_to_probs(net, images):
     '''
@@ -79,3 +88,10 @@ def arrangeFaces(faceVector):
         facesArranged[frameSeq].append(f)
 
     return facesArranged
+
+def readFeturesFiles(ffpath):
+    returnData=[]
+    with open(ffpath,'r') as fct:
+        for f in fct:
+            returnData.append(list(map(float,f.split(','))))
+    return returnData

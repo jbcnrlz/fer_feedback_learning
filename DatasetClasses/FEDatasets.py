@@ -61,7 +61,7 @@ class CASME2(data.Dataset):
         self.label = []
         self.filesPath = []
         raw_data_loaded = getDirectoriesInPath(os.path.join(casmepath,phase))
-        labelName = raw_data_loaded
+        labelName = ['appex','neutral','offset','onset']
         for r in raw_data_loaded:
             files = getFilesInPath(os.path.join(casmepath,phase,r))
             for f in files:
@@ -87,7 +87,7 @@ class CASME2Block(data.Dataset):
         self.label = []
         self.filesPath = []
         raw_data_loaded = getDirectoriesInPath(os.path.join(casmepath,phase))
-        labelName = raw_data_loaded
+        labelName = ['appex','neutral','offset','onset']
         for r in raw_data_loaded:
             files = getFilesInPath(os.path.join(casmepath,phase,r))
             blockFiles = {}
@@ -133,7 +133,7 @@ class CASME2BlockTemporal(data.Dataset):
         self.label = []
         self.filesPath = []
         raw_data_loaded = getDirectoriesInPath(os.path.join(casmepath,phase))
-        labelName = raw_data_loaded
+        labelName = ['appex','neutral','offset','onset']
         for r in raw_data_loaded:
             files = getFilesInPath(os.path.join(casmepath,phase,r))
             blockFiles = {}

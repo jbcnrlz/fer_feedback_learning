@@ -8,7 +8,7 @@ def saveLandmarks(ldns,filepath):
             fp.write(','.join(list(map(str,l)))+'\n')
 
 def main(args):
-    files = getFilePaths(args.pathBase)
+    files = getFilePaths(args.pathBase,imageExtesions=('.jpg'))
     fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
     for f in files:
         print("Extracting landmarks from " + f)

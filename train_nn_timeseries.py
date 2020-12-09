@@ -1,6 +1,6 @@
 from finetune_resnet import set_parameter_requires_grad
 from torchvision import transforms, models
-from DatasetClasses.FEDatasets import CASME2Block, CASME2BlockTemporal, CASME2SALIENCY
+from DatasetClasses.FEDatasets import CASME2Block, CASME2BlockTemporal, CASME2SALIENCY, CASME2
 from torch import nn, optim
 import torch, copy, time
 from NeuralNetworks.PyTorch.networks import TimeSeriesLearning
@@ -148,7 +148,7 @@ def main():# Data augmentation and normalization for training
             params_to_update.append(param)
             print("\t", name)
 
-    optimizer_ft = optim.SGD(params_to_update, lr=0.005, momentum=0.9)
+    optimizer_ft = optim.SGD(params_to_update, lr=0.001, momentum=0.9)
     criterion = nn.CrossEntropyLoss()
 
     a,b = trainNetwork(resnetFT,dataloaders_dict,criterion,optimizer_ft)
