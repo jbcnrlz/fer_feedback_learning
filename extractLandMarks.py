@@ -11,12 +11,12 @@ def main(args):
     files = getFilePaths(args.pathBase,imageExtesions=('.jpg'))
     fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
     for f in files:
-        print("Extracting landmarks from " + f)
-        currIm = io.imread(f)
         fileName = f.split(os.path.sep)[-1].split('.')[0]
         filePathDir = os.path.sep.join(f.split(os.path.sep)[:-1])
         if os.path.exists(os.path.join(filePathDir,fileName+'_landmarks.txt')):
             continue
+        currIm = io.imread(f)
+        print("Extracting landmarks from " + f)
         pred = fa.get_landmarks(currIm)
         if pred is None:
             continue
