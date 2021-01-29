@@ -1,11 +1,6 @@
 import argparse, os, face_alignment
-from function import getFilePaths
+from function import getFilePaths, saveLandmarks
 from skimage import io
-
-def saveLandmarks(ldns,filepath):
-    with open(filepath,'w') as fp:
-        for l in ldns:
-            fp.write(','.join(list(map(str,l)))+'\n')
 
 def main(args):
     files = getFilePaths(args.pathBase,imageExtesions=('.jpg'))

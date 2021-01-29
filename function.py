@@ -1,5 +1,10 @@
 import os, torch, numpy as np, torch.nn.functional as F, matplotlib.pyplot as plt, cv2
 
+def saveLandmarks(ldns,filepath):
+    with open(filepath,'w') as fp:
+        for l in ldns:
+            fp.write(','.join(list(map(str,l)))+'\n')
+
 def outputImageWithLandmarks(image,landmarks,pathImage):
     for landmark in landmarks:
         for x, y in landmark:
