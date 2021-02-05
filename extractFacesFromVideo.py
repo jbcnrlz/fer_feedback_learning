@@ -31,12 +31,12 @@ def isNewROI(currRoi,foundFaces):
     return returnData
 
 def main():
-    if os.path.exists('frames_face'):
-        shutil.rmtree('frames_face')
+    if os.path.exists('clipe1'):
+        shutil.rmtree('clipe1')
 
-    os.makedirs('frames_face')
+    os.makedirs('clipe1')
     sucs = 1
-    vcap = cv2.VideoCapture("2GRAV1qua1.mp4")
+    vcap = cv2.VideoCapture("clipe1.mp4")
     frame_number=0
     face_cascade = cv2.CascadeClassifier('cascadeFolder/haarcascade_frontalface_default.xml')
     rois = []
@@ -52,7 +52,7 @@ def main():
         for fnum, b in enumerate(faces):
             print("Extraindo face %d" % (roins[fnum]))
             fImage = imgv[b[1]:b[1]+b[3],b[0]:b[0]+b[2]]
-            cv2.imwrite(os.path.join('frames_face',"roi_" + str(roins[fnum]) + "_frame_"+str(frame_number)+".jpg"),fImage)
+            cv2.imwrite(os.path.join('clipe1',"roi_" + str(roins[fnum]) + "_frame_"+str(frame_number)+".jpg"),fImage)
         frame_number+=1
 
 

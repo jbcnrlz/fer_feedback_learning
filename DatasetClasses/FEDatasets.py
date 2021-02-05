@@ -3,19 +3,25 @@ from function import getDirectoriesInPath, getFilesInPath
 from PIL import Image as im
 #from generateDenseOpticalFlow import runDenseOpFlow
 
-class AFFData(data.Dataset):
+class AFFDataBlock(data.Dataset):
     def __init__(self, affData, phase, transform=None):
         self.transform = transform
         self.label = []
         self.filesPath = []
         self.keypointsPath = []
         files = getFilesInPath(os.path.join(affData,phase))
+
         for r in files:
             fileName = r.split(os.path.sep)[-1]
             roi = int('right' in fileName)
             dirName = fileName.split('.')[0]
             if '_' in dirName:
                 dirName = dirName.split('_')[0]
+
+            dirPath = os.path.join(affData, phase, dirName)
+
+            if not os.path.exists(dirPath):
+                continue
 
             valarrousal = self.loadLabels(r)
             for frameN, labelValue in enumerate(valarrousal):
@@ -40,12 +46,62 @@ class AFFData(data.Dataset):
     def __getitem__(self, idx):
         path = self.filesPath[idx]
         image = im.open(path)
-        label = self.label[idx]
+        label = torch.from_numpy(np.array(self.label[idx]).reshape((1,-1))).to(torch.float32)
         keypoints = self.keypointsPath[idx]
         if self.transform is not None:
             image = self.transform(image)
 
-        return image, torch.from_numpy(np.array(label)), keypoints
+        return image, label, keypoints
+
+
+class AFFData(data.Dataset):
+    def __init__(self, affData, phase, transform=None):
+        self.transform = transform
+        self.label = []
+        self.filesPath = []
+        self.keypointsPath = []
+        files = getFilesInPath(os.path.join(affData,phase))
+        for r in files:
+            fileName = r.split(os.path.sep)[-1]
+            roi = int('right' in fileName)
+            dirName = fileName.split('.')[0]
+            if '_' in dirName:
+                dirName = dirName.split('_')[0]
+
+            dirPath = os.path.join(affData, phase, dirName)
+
+            if not os.path.exists(dirPath):
+                continue
+
+            valarrousal = self.loadLabels(r)
+            for frameN, labelValue in enumerate(valarrousal):
+                subjectData = os.path.join(affData,phase,dirName,'roi_%d_frame_%d.jpg') % (roi,frameN)
+                if os.path.exists(subjectData):
+                    self.filesPath.append(subjectData)
+                    self.keypointsPath.append(os.path.join(affData, phase, dirName, 'roi_%d_frame_%d.txt') % (roi, frameN))
+                    self.label.append(labelValue)
+
+    def loadLabels(self,path):
+        van = []
+        with open(path,'r') as fp:
+            fp.readline()
+            for f in fp:
+               van.append(list(map(float,f.split(','))))
+
+        return van
+
+    def __len__(self):
+        return len(self.filesPath)
+
+    def __getitem__(self, idx):
+        path = self.filesPath[idx]
+        image = im.open(path)
+        label = torch.from_numpy(np.array(self.label[idx]).reshape((1,-1))).to(torch.float32)
+        keypoints = self.keypointsPath[idx]
+        if self.transform is not None:
+            image = self.transform(image)
+
+        return image, label, keypoints
 
 
 def getCASME2BlockData(casmepath,phase,blocksize):

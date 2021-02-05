@@ -43,10 +43,10 @@ def trainNetwork(model, dataloaders, criterion, optimizer, num_epochs=25):
                 # track history if only in train
                 with torch.set_grad_enabled(phase == 'Train_Set'):
                     model.zero_grad()
-                    outputs, feats = model(inputs)
+                    outputs = model(inputs)
                     loss = criterion(outputs, labels)
 
-                    _, preds = torch.max(outputs, 1)
+                    #_, preds = torch.max(outputs, 1)
 
                     # backward + optimize only if in training phase
                     if phase == 'Train_Set':
@@ -57,17 +57,19 @@ def trainNetwork(model, dataloaders, criterion, optimizer, num_epochs=25):
 
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
-                running_corrects += torch.sum(preds == labels.data)
+                #running_corrects += torch.sum(preds == labels.data)
 
             epoch_loss = running_loss / len(dataloaders[phase].dataset)
-            epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
+            #epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
 
-            print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
+            #print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
+            print('{} Loss: {:.4f}'.format(phase, epoch_loss))
 
             wtr.add_scalar(phase + ' loss',epoch_loss,epoch)
-            wtr.add_scalar(phase + ' acc', epoch_acc, epoch)
+            #wtr.add_scalar(phase + ' acc', epoch_acc, epoch)
 
             # deep copy the model
+            '''
             if phase == 'val' and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
@@ -77,6 +79,7 @@ def trainNetwork(model, dataloaders, criterion, optimizer, num_epochs=25):
                     'arch': 'TimeSeriesLearningSkip',
                     'state_dict': best_model_wts
                 }, fName)
+            '''
             if phase == 'Validation_Set' and epoch_loss < best_loss:
                 best_loss = epoch_loss
                 best_model_loss = copy.deepcopy(model.state_dict())
@@ -86,9 +89,10 @@ def trainNetwork(model, dataloaders, criterion, optimizer, num_epochs=25):
                     'arch': 'TimeSeriesLearningSkip',
                     'state_dict': best_model_loss
                 }, fName)
+            '''
             if phase == 'Validation_Set':
                 val_acc_history.append(epoch_acc)
-
+            '''
         print()
 
     time_elapsed = time.time() - since

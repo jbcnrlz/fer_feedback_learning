@@ -1,5 +1,5 @@
 from torch import nn
-import torch.nn.functional as F
+import torch.nn.functional as F, torch
 
 class TimeSeriesLearning(nn.Module):
     def __init__(self,classes,in_channels=4):
@@ -41,22 +41,30 @@ class TimeSeriesLearningSkip(nn.Module):
             nn.BatchNorm2d(32),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2),
-        )
-
-        self.b2 = nn.Sequential(
             nn.Conv2d(32, 64, kernel_size=3, stride=1),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2)
         )
 
+        self.b2 = nn.Sequential(
+            nn.Conv2d(64, 128, kernel_size=3, stride=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(128, 256, kernel_size=3, stride=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2)
+        )
+
         self.linearFeatures = nn.Sequential(
-            nn.Linear(179776, 1024)
+            nn.Linear(2304, 1024)
         )
 
         self.lstmending = nn.LSTM(1024,1024)
-        self.lstmmiddle = nn.LSTM(1024, 1024)
-        self.lstmtop = nn.LSTM(1024, 1024)
+        self.lstmmiddle = nn.LSTM(2304, 1024)
+        self.lstmtop = nn.LSTM(30976, 1024)
 
         self.featureTimeLearning = nn.Linear(3072, 2)
 
@@ -65,7 +73,13 @@ class TimeSeriesLearningSkip(nn.Module):
         outfeatures2 = self.b2(outfeatures1)
         outfeatures = outfeatures2.view(len(outfeatures2),1,-1)
         outfeatures = self.linearFeatures(outfeatures)
-        lstmout, _ = self.lstm(outfeatures.view(len(outfeatures),1,-1))
-        tag_space = self.featureTimeLearning(lstmout.view(len(lstmout), -1))
-        tag_scores = F.log_softmax(tag_space, dim=1)
-        return tag_scores, tag_space
+
+        outfeatures1 = outfeatures1.view(len(outfeatures1),1,-1)
+        outfeatures2 = outfeatures2.view(len(outfeatures2), 1, -1)
+
+        outfeatures1, _ = self.lstmtop(outfeatures1)
+        outfeatures2, _ = self.lstmmiddle(outfeatures2)
+        outfeatures, _ = self.lstmending(outfeatures.view(len(outfeatures),1,-1))
+
+        catFeature = torch.cat((outfeatures1,outfeatures2,outfeatures),2)
+        return self.featureTimeLearning(catFeature)
