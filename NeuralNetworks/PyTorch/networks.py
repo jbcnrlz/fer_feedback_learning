@@ -33,8 +33,11 @@ class TimeSeriesLearning(nn.Module):
         return tag_scores, tag_space
 
 class TimeSeriesLearningSkip(nn.Module):
-    def __init__(self,in_channels=3):
+    def __init__(self,in_channels=3,sequenceSize=40):
         super(TimeSeriesLearningSkip,self).__init__()
+
+        self.sequenceSize = sequenceSize
+        self.inChannels = in_channels
 
         self.b1 = nn.Sequential(
             nn.Conv2d(in_channels, 32, kernel_size=3, stride=1),
@@ -66,9 +69,10 @@ class TimeSeriesLearningSkip(nn.Module):
         self.lstmmiddle = nn.LSTM(2304, 1024)
         self.lstmtop = nn.LSTM(30976, 1024)
 
-        self.featureTimeLearning = nn.Linear(3072, 2)
+        self.featureTimeLearning = nn.Linear(3072, 2,bias=False)
 
     def forward(self,x):
+        x = x.reshape((self.sequenceSize*x.shape[0],self.inChannels,x.shape[-2],x.shape[-1]))
         outfeatures1 = self.b1(x)
         outfeatures2 = self.b2(outfeatures1)
         outfeatures = outfeatures2.view(len(outfeatures2),1,-1)

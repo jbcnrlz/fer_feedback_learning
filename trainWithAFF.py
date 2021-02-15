@@ -1,5 +1,5 @@
 import torch, copy, time
-from DatasetClasses.FEDatasets import AFFData
+from DatasetClasses.FEDatasets import AFFData, AFFDataBlock
 from torchvision import transforms
 from NeuralNetworks.PyTorch.networks import TimeSeriesLearningSkip
 from torch.utils.tensorboard import SummaryWriter
@@ -44,6 +44,7 @@ def trainNetwork(model, dataloaders, criterion, optimizer, num_epochs=25):
                 with torch.set_grad_enabled(phase == 'Train_Set'):
                     model.zero_grad()
                     outputs = model(inputs)
+                    labels = labels.reshape((labels.shape[0]*labels.shape[1],1,labels.shape[2]))
                     loss = criterion(outputs, labels)
 
                     #_, preds = torch.max(outputs, 1)
@@ -109,19 +110,20 @@ def main():
     folders = ['Train_Set', 'Validation_Set']
     data_transforms = {
         'Train_Set': transforms.Compose([
-            transforms.RandomResizedCrop(input_size),
+            transforms.Resize(input_size),
             transforms.RandomHorizontalFlip(),
+            #transforms.RandomRotation(90),
             transforms.ToTensor(),
-            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+            #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
         ]),
         'Validation_Set': transforms.Compose([
             transforms.Resize(input_size),
             transforms.ToTensor(),
-            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+            #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
         ]),
     }
     model = TimeSeriesLearningSkip()
-    image_datasets = {x: AFFData('formated_aff', x, data_transforms[x]) for x in folders}
+    image_datasets = {x: AFFDataBlock('/home/joaocardia/PycharmProjects/formated_aff', x, data_transforms[x]) for x in folders}
     dataloaders_dict = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=25, shuffle=True, num_workers=4) for x in folders}
     optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     criterion = nn.MSELoss()
