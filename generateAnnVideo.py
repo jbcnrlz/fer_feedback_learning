@@ -115,7 +115,8 @@ def main():
                     savedFrame[-1][1][roins[fnum]] = (b[0],b[1]+b[3]+12)
                     #print("Extraindo face %d" % (roins[fnum]))
                     fImage = imgv[b[1]:b[1]+b[3],b[0]:b[0]+b[2]]
-                    fImage = cv2.resize(fImage, (100, 100)) / 255
+                    fImage = cv2.resize(fImage, (100, 100)) - 128
+                    fImage = fImage / 128
                     if roins[fnum] not in face_expressions.keys():
                         face_expressions[roins[fnum]] = [[],[]]
                     face_expressions[roins[fnum]][0].append(fImage)

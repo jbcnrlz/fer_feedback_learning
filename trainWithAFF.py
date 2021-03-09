@@ -122,8 +122,8 @@ def main():
             #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
         ]),
     }
-    model = TimeSeriesLearningSkip()
-    image_datasets = {x: AFFDataBlock('/home/joaocardia/PycharmProjects/formated_aff', x, data_transforms[x]) for x in folders}
+    model = TimeSeriesLearningSkip(sequenceSize=0)
+    image_datasets = {x: AFFData('/home/joaocardia/PycharmProjects/formated_aff', x, data_transforms[x]) for x in folders}
     dataloaders_dict = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=25, shuffle=True, num_workers=4) for x in folders}
     optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     criterion = nn.MSELoss()

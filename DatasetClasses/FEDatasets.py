@@ -67,7 +67,8 @@ class AFFDataBlock(data.Dataset):
             label = torch.from_numpy(np.array(self.label[idx][idxFile]).reshape((1,-1))).to(torch.float32)
             keypoints = self.keypointsPath[idx][idxFile]
             if self.transform is not None:
-                image = self.transform(image) / 255
+                image = self.transform(image) - 128
+                image = image / 128
 
             if imageOut is None:
                 imageOut = image
@@ -128,6 +129,8 @@ class AFFData(data.Dataset):
         keypoints = self.keypointsPath[idx]
         if self.transform is not None:
             image = self.transform(image)
+            image -= 128
+            image /= 128
 
         return image, label, keypoints
 

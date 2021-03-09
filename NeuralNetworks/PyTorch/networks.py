@@ -72,7 +72,8 @@ class TimeSeriesLearningSkip(nn.Module):
         self.featureTimeLearning = nn.Linear(3072, 2,bias=False)
 
     def forward(self,x):
-        x = x.reshape((self.sequenceSize*x.shape[0],self.inChannels,x.shape[-2],x.shape[-1]))
+        if self.sequenceSize > 0:
+            x = x.reshape((self.sequenceSize*x.shape[0],self.inChannels,x.shape[-2],x.shape[-1]))
         outfeatures1 = self.b1(x)
         outfeatures2 = self.b2(outfeatures1)
         outfeatures = outfeatures2.view(len(outfeatures2),1,-1)
