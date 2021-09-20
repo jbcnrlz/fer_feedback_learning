@@ -3,6 +3,86 @@ from function import getDirectoriesInPath, getFilesInPath
 from PIL import Image as im
 #from generateDenseOpticalFlow import runDenseOpFlow
 
+class AFFOneDataBlock(data.Dataset):
+    def __init__(self, affData, phase, transform=None,blockSize=40):
+        self.transform = transform
+        self.blocksize = blockSize
+        self.label = []
+        self.filesPath = []
+        self.keypointsPath = []
+        files = getFilesInPath(os.path.join(affData,phase))
+
+        for r in files:
+            fileName = r.split(os.path.sep)[-1]
+            roi = int('right' in fileName)
+            dirName = fileName.split('.')[0]
+            if '_' in dirName:
+                dirName = dirName.split('_')[0]
+
+            dirPath = os.path.join(affData, phase, dirName)
+
+            if not os.path.exists(dirPath):
+                continue
+
+            valarrousal = self.loadLabels(r)
+            block = []
+            keyPointBlock = []
+            labelBlock = []
+            for frameN, labelValue in enumerate(valarrousal):
+                subjectData = os.path.join(affData,phase,dirName,'roi_%d_frame_%d.jpg') % (roi,frameN)
+                if os.path.exists(subjectData):
+                    block.append(subjectData)
+                    keyPointBlock.append(os.path.join(affData, phase, dirName, 'roi_%d_frame_%d.txt') % (roi, frameN))
+                    labelBlock.append(labelValue)
+
+                if len(block) == blockSize:
+                    self.filesPath.append(block)
+                    self.keypointsPath.append(keyPointBlock)
+                    self.label.append(labelBlock)
+                    block = []
+                    keyPointBlock = []
+                    labelBlock = []
+                    #self.filesPath.append(subjectData)
+                    #self.keypointsPath.append(os.path.join(affData, phase, dirName, 'roi_%d_frame_%d.txt') % (roi, frameN))
+                    #self.label.append(labelValue)
+
+    def loadLabels(self,path):
+        van = []
+        with open(path,'r') as fp:
+            fp.readline()
+            for f in fp:
+               van.append(list(map(float,f.split(','))))
+
+        return van
+
+    def __len__(self):
+        return len(self.filesPath)
+
+    def __getitem__(self, idx):
+        imageOut = None
+        labelOut = None
+        keypointsOut = []
+        for idxFile, fs in enumerate(self.filesPath[idx]):
+            image = im.open(fs)
+            label = torch.from_numpy(np.array(self.label[idx][idxFile]).reshape((1,-1))).to(torch.float32)
+            keypoints = self.keypointsPath[idx][idxFile]
+            if self.transform is not None:
+                image = self.transform(image) - 128
+                image = image / 128
+
+            if imageOut is None:
+                imageOut = image
+                labelOut = label
+            else:
+                imageOut = torch.cat((imageOut,image),0)
+                labelOut = torch.cat((labelOut, label), 0)
+
+            keypointsOut.append(keypoints)
+
+
+        return imageOut, labelOut, keypointsOut
+
+
 class AFFDataBlock(data.Dataset):
     def __init__(self, affData, phase, transform=None,blockSize=40):
         self.transform = transform

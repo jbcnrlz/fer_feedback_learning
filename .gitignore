@@ -5,3 +5,11 @@
 /CASME2-RAW/
 /CASME2_formated/
 /resnet_50_best_rank.pth.tar
+/clipe1/
+/clipe2/
+/runs/
+/wtgs_affwildnet/
+/clipe1.mp4
+/clipe2.mp4
+/TimeSeriesLearningSkip_best_loss.pth.tar
+/temporal_resnet_50_best_loss.pth.tar
