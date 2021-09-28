@@ -124,8 +124,9 @@ def main():
     }
     model = TimeSeriesLearningSkip(sequenceSize=0)
     image_datasets = {x: AFFData('/home/joaocardia/PycharmProjects/formated_aff', x, data_transforms[x]) for x in folders}
-    dataloaders_dict = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=25, shuffle=True, num_workers=4) for x in folders}
-    optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    dataloaders_dict = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=50, shuffle=True, num_workers=4) for x in folders}
+    #optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    optimizer_ft = optim.Adam(model.parameters(), lr=0.0005)
     criterion = nn.MSELoss()
     a, b = trainNetwork(model, dataloaders_dict, criterion, optimizer_ft)
 
