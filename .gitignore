@@ -13,3 +13,7 @@
 /clipe2.mp4
 /TimeSeriesLearningSkip_best_loss.pth.tar
 /temporal_resnet_50_best_loss.pth.tar
+.vscode/launch.json
+affwildtesttrain/annotations/AU_Set/.DS_Store
+affwildtesttrain/
+__pycache__/function.cpython-37.pyc
