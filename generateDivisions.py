@@ -24,6 +24,7 @@ def affwild2(pathbase,typeExp,outputfolder):
             print("Copying files from %s to dataset" % (folderName))
             filesFromVideo = getFilesInPath(os.path.join(pathFilesForTraining,folderName))
             if sizeVal > 0 and random.randint(0,1):
+                shutil.copy(f,os.path.join(outputfolder,'val',folderName+'.txt'))
                 for fImage in filesFromVideo:
                     if 'jpg' not in fImage:
                         continue
@@ -31,12 +32,14 @@ def affwild2(pathbase,typeExp,outputfolder):
                     shutil.copy(fImage,os.path.join(outputfolder,'val',folderName+'_'+fileJpgName))
                 sizeVal -= 1            
             elif 'Train' in s:
+                shutil.copy(f,os.path.join(outputfolder,'train',folderName+'.txt'))
                 for fImage in filesFromVideo:
                     if 'jpg' not in fImage:
                         continue
                     fileJpgName = fImage.split(os.path.sep)[-1]
                     shutil.copy(fImage,os.path.join(outputfolder,'train',folderName+'_'+fileJpgName))
             else:
+                shutil.copy(f,os.path.join(outputfolder,'test',folderName+'.txt'))
                 for fImage in filesFromVideo:
                     if 'jpg' not in fImage:
                         continue

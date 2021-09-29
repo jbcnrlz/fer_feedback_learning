@@ -17,3 +17,5 @@
 affwildtesttrain/annotations/AU_Set/.DS_Store
 affwildtesttrain/
 __pycache__/function.cpython-37.pyc
+DatasetClasses/__pycache__/FEDatasets.cpython-37.pyc
+NeuralNetworks/PyTorch/__pycache__/networks.cpython-37.pyc

@@ -454,3 +454,46 @@ class IngDiscLearnDataSetBlock(data.Dataset):
 
 
         return blockOutput, label
+
+class AFF2Data(data.Dataset):
+    def __init__(self, affData, phase, transform=None):
+        self.transform = transform
+        self.label = []
+        self.filesPath = []
+        self.keypointsPath = []
+        files = getFilesInPath(os.path.join(affData,phase))
+        for r in files:
+            fileName = r.split(os.path.sep)[-1]            
+            if fileName[-3:] == 'txt':                
+                continue
+            
+            featureFilesName = '_'.join(fileName.split('_')[:-1]) + '.txt'
+            indexData = int(fileName.split('_')[-1].split('.')[0])
+            valarrousal = self.loadLabels(os.path.join(affData,phase,featureFilesName))
+            self.filesPath.append(r)
+            self.keypointsPath.append(os.path.join(affData,phase,featureFilesName))
+            self.label.append(valarrousal[indexData])
+
+    def loadLabels(self,path):
+        van = []
+        with open(path,'r') as fp:
+            fp.readline()
+            for f in fp:
+               van.append(list(map(float,f.split(','))))
+
+        return van
+
+    def __len__(self):
+        return len(self.filesPath)
+
+    def __getitem__(self, idx):
+        path = self.filesPath[idx]
+        image = im.open(path)
+        label = torch.from_numpy(np.array(self.label[idx]).reshape((1,-1))).to(torch.float32)
+        keypoints = self.keypointsPath[idx]
+        if self.transform is not None:
+            image = self.transform(image)
+            image -= 128
+            image /= 128
+
+        return image, label, keypoints
